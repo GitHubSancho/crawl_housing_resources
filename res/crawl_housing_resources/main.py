@@ -12,9 +12,11 @@ from time import sleep
 from urllib.parse import urlparse
 import pandas as pd
 from requests import RequestException
+import webbrowser
 # ----
 from resources_manager import ResourcesBase, Anjuke
 from downloader import Download
+from app import app
 
 # pandas输出设置项
 pd.set_option('display.unicode.ambiguous_as_wide', True)  #处理数据的列标题与数据无法对齐的情况
@@ -34,9 +36,13 @@ class Engine:
         self.url = self.instance.build_url()  # 在房源类中格式化url
         self.params = self.instance.build_params()  # 在房源类中格式化参数
         data = self._next_pages()
+        self._open_html(data)
+
+    def _open_html(self, data: pd.DataFrame):
         name = '租房收集.csv'
-        data.to_csv(name, index=False,encoding='utf_8_sig')
-        print(f"已保存: 请在{name}中查看")
+        data.to_csv(name, index=False, encoding='utf_8_sig')
+        webbrowser.open('http://127.0.0.1:5000/')
+        app.run()
 
     def _instantiation_instance(self, *args, **kwargs):
         if not isinstance(args, tuple) and hasattr(args, '__call__'):
@@ -75,7 +81,7 @@ class Engine:
 
             print(f"第{count}页")
             count += 1
-            sleep(5)
+            sleep(6)  # 延迟访问，太快会触发访问限制，需要手动进网页输入验证
         return data
 
 
@@ -93,4 +99,4 @@ def get_path():
 if __name__ == "__main__":
     MY_PATH, OBJECT_PATH = get_path()
     e = Engine()
-    e.start(Anjuke, 'cd', 'zu', max_price=1500, contract_type=1, other='l2')
+    e.start(Anjuke, 'cd', 'zu', max_price=1300, contract_type=1, other='l2')
