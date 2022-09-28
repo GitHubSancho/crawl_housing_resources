@@ -89,6 +89,8 @@ class Anjuke(ResourcesBase):
         html = etree.HTML(html)
         aa = html.xpath('//*[@class="zu-itemmod"]')
         next_url = html.xpath('//*[@class="aNxt"]/@href')
+        if next_url:
+            next_url = next_url[0]
 
         for a in aa:
             title = a.xpath('./div[1]/h3/a/b/text()')[0]

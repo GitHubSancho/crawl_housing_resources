@@ -20,7 +20,7 @@ class Download:
         headers = headers or random.choice(self.ua_list)
         try:
             with self.session as s:
-                resp = s.get(url, params=params, headers=headers)
+                resp = s.get(url, params=params, headers=headers, timeout=5)
                 status = resp.status_code
                 encoding = cchardet.detect(resp.content)['encoding']
                 resp.encoding = encoding
