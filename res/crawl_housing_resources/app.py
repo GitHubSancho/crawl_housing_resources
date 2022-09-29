@@ -5,14 +5,7 @@ app = Flask(__name__)
 
 
 def read_data():
-    return pd.read_csv(
-        '租房收集.csv',
-        encoding='utf_8_sig',
-        #    sep="::",
-        #    engine='python',
-        #    header=None,
-        #    names="title::details::address::tags::price".split("::")
-    )
+    return pd.read_csv('data.csv', encoding='utf_8_sig')
 
 
 @app.route('/')

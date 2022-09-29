@@ -101,4 +101,5 @@ class Anjuke(ResourcesBase):
             price = a.xpath('string(./div[2]/p[1])')
             df.loc[len(df)] = [title, details, addresses, tags, price]
 
+        # 返回解析的数据和下一页的链接
         return df, next_urls
