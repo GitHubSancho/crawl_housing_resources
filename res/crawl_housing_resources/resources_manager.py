@@ -65,11 +65,11 @@ class Anjuke(ResourcesBase):
         if self.room_type:
             url = f'fx{self.room_type}'
         if url and self.contract_type:
-            url = f'{url}_x{self.contract_type}'
+            url = f'{url}-x{self.contract_type}'
         elif self.contract_type:
             url = f'x{self.contract_type}'
         if url and self.other:
-            url = f'{url}_{self.other}'
+            url = f'{url}-{self.other}'
         elif self.other:
             url = self.other
         return self.url + url
@@ -88,9 +88,8 @@ class Anjuke(ResourcesBase):
             [], columns=['title', 'details', 'address', 'tags', 'price'])
         html = etree.HTML(html)
         aa = html.xpath('//*[@class="zu-itemmod"]')
-        next_url = html.xpath('//*[@class="aNxt"]/@href')
-        if next_url:
-            next_url = next_url[0]
+        next_urls = html.xpath('//*[@class="multi-page"]/a/@href')
+        next_urls = list(set(next_urls))  # 去重
 
         for a in aa:
             title = a.xpath('./div[1]/h3/a/b/text()')[0]
@@ -102,4 +101,4 @@ class Anjuke(ResourcesBase):
             price = a.xpath('string(./div[2]/p[1])')
             df.loc[len(df)] = [title, details, addresses, tags, price]
 
-        return df, next_url
+        return df, next_urls

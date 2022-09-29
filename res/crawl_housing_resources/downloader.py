@@ -1,3 +1,4 @@
+import aiohttp
 import requests
 import yaml
 import random
@@ -25,6 +26,32 @@ class Download:
                 encoding = cchardet.detect(resp.content)['encoding']
                 resp.encoding = encoding
                 html = resp.text
+                redirected_url = resp.url
+        except Exception as e:
+            msg = f'Failed download: {url} | exception: {str(type(e))}, {str(e)}'
+            status = 0
+            html = ''
+            redirected_url = url
+            print(msg)
+        return status, html, url, redirected_url
+
+    async def async_download_url(self,
+                                 session: aiohttp.ClientSession,
+                                 url,
+                                 params=None,
+                                 headers=None):
+        headers = headers or random.choice(self.ua_list)
+        try:
+            async with session.get(url,
+                                   params=params,
+                                   headers=headers,
+                                   timeout=6) as resp:
+                status = resp.status
+                assert status == 200
+                # aiohttp不需要手动编码
+                # encoding = cchardet.detect(resp.content)['encoding']
+                # resp.encoding = encoding
+                html = await resp.text()
                 redirected_url = resp.url
         except Exception as e:
             msg = f'Failed download: {url} | exception: {str(type(e))}, {str(e)}'

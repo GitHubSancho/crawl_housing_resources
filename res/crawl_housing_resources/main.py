@@ -13,6 +13,8 @@ from urllib.parse import urlparse
 import pandas as pd
 from requests import RequestException
 import webbrowser
+import aiohttp
+import asyncio
 # ----
 from resources_manager import ResourcesBase, Anjuke
 from downloader import Download
@@ -36,6 +38,21 @@ class Engine:
         self.url = self.instance.build_url()  # 在房源类中格式化url
         self.params = self.instance.build_params()  # 在房源类中格式化参数
         data = self._next_pages()
+
+        # 显示结果
+        self._open_html(data)
+
+    async def async_start(self, *args, **kwargs):
+        # 判断传参格式,实例化房源类
+        self._instantiation_instance(*args, **kwargs)
+
+        # 下载和解析页面
+        self.downloader = Download(OBJECT_PATH)  # 初始化下载器
+        self.url = self.instance.build_url()  # 在房源类中格式化url
+        self.params = self.instance.build_params()  # 在房源类中格式化参数
+        data = await self._async_next_pages()
+
+        # 显示结果
         self._open_html(data)
 
     def _open_html(self, data: pd.DataFrame):
@@ -84,6 +101,47 @@ class Engine:
             sleep(6)  # 延迟访问，太快会触发访问限制，需要手动进网页输入验证
         return data
 
+    async def _get_tasks(self, session, params):
+        tasks = [
+            self.downloader.async_download_url(session, k, params)
+            for k, v in self.url_pool.items() if v
+        ]
+        return await asyncio.gather(*tasks)
+
+    def _unpack_resp(self, resp):
+        # 解包返回值
+        for status, html, url, redirected_url in resp:
+            # 解析网页
+            df, next_urls = self._filter_html(status, html)
+            self.data = pd.concat([self.data, df])  # 合并数据
+
+            # 格式化链接
+            # [
+            #     self.url_pool.update({self._filter_url(_url): 1})
+            #     for _url in next_urls if not self.url_pool.get(url, False)
+            # ]  # 增加新链接
+            for _url in next_urls:  # 增加新链接
+                _url = self._filter_url(_url)
+                if _url in self.url_pool.keys():
+                    continue
+                self.url_pool.update({_url: 1})
+            self.url_pool[url] = 0  # 标记已下载链接
+
+    async def _async_next_pages(self):
+        count = 0
+        params = self.params
+        self.data = pd.DataFrame()
+        self.url_pool = {self.url: 1}  # 创建链接池,1=待访问，0=已完成
+        async with aiohttp.ClientSession() as session:
+            while any(self.url_pool.values()):
+                resp = await self._get_tasks(session, params)
+                self._unpack_resp(resp)
+
+                count += len(resp)
+                print(f"第{count}页")
+                await asyncio.sleep(6)  # 延迟访问，太快会触发访问限制，需要手动进网页输入验证
+        return self.data
+
 
 def get_path():
     # 根据操作系统找到当前文件路径
@@ -99,4 +157,14 @@ def get_path():
 if __name__ == "__main__":
     MY_PATH, OBJECT_PATH = get_path()
     e = Engine()
-    e.start(Anjuke, 'cd', 'zu', max_price=1300, contract_type=1, other='l2')
+    # e.start(Anjuke, 'cd', 'zu', max_price=1300, contract_type=1, other='l2')
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        e.async_start(Anjuke,
+                      'cd',
+                      'zu',
+                      max_price=2000,
+                      contract_type=1,
+                      other='l2'))
+    loop.close()
