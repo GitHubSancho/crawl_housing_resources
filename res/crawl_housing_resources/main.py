@@ -7,7 +7,12 @@
 爬取互联网上的住房信息
 """
 import os
+from tkinter import E
+from unittest import result
 from flask import Flask, redirect, render_template, request, url_for
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired, EqualTo, Length
 import pandas as pd
 import yaml
 import sys
@@ -26,13 +31,6 @@ pd.set_option('display.unicode.ambiguous_as_wide', True)  #处理数据的列标
 pd.set_option('display.unicode.east_asian_width', True)  #无法对齐主要是因为列标题是中文
 
 
-def load_cities() -> dict:
-    "读取城市列表"
-    with open('cities.yml', 'r', encoding='utf-8') as f:
-        cities = yaml.load(f, Loader=yaml.CLoader)
-    return cities
-
-
 class Engine:
     def __init__(self) -> None:
         pass
@@ -45,10 +43,10 @@ class Engine:
         self.downloader = Download()  # 初始化下载器
         self.url = self.instance.build_url()  # 在房源类中格式化url
         self.params = self.instance.build_params()  # 在房源类中格式化参数
-        data = await self._async_get_data()
+        data = await self._async_get_data()  # 解析网页数据
 
-        # 显示结果
-        self._open_app(data)
+        # 保存结果
+        data.to_csv('data.csv', index=False, encoding='utf_8_sig')
 
     def _instantiation_instance(self, *args, **kwargs):
         if not isinstance(args, tuple) and hasattr(args, '__call__'):
@@ -67,10 +65,15 @@ class Engine:
         return await self.downloader.async_fetch(self.instance.filter_html,
                                                  self.url_pool, self.params)
 
-    def _open_app(self, data: pd.DataFrame):
-        name = 'data.csv'
-        data.to_csv(name, index=False, encoding='utf_8_sig')
-        webbrowser.open('http://127.0.0.1:5000/')
+
+class Register(FlaskForm):
+    username = StringField(
+        lable='city',
+        validators=[DataRequired()],  # 验证是否为空
+        render_kw={  # 额外属性
+            'placeholder': 'city',
+            'class': 'input_text'
+        })
 
 
 class Appcation:
@@ -95,42 +98,67 @@ class Appcation:
             return 'Wrong access method'
 
         result = request.form
-        if city := load_cities().get(result['city']):
+        cities = load_cities()
+        if city := cities.get(result.get('city', type=str)):
             return redirect(
                 url_for('get_resources',
                         city=city,
-                        terms=result['terms'],
-                        min_price=result['min_price'],
-                        max_price=result['max_price'],
-                        room_type=result['room_type']))
-        return f"未找到城市：{result['city']}"
+                        terms=result.get('terms', type=str),
+                        min_price=result.get('min_price', type=str),
+                        max_price=result.get('max_price', type=str),
+                        room_type=result.get('room_type', type=str)))
+        return f"未找到城市：{result.get('city')}"
 
     @staticmethod
-    @app.route('/resources/<city><terms><min_price><max_price><room_type>')
-    def get_resources(city, terms, min_price, max_price, room_type):
+    @app.route('/resources/>')
+    def get_resources():
         """传递参数，获取数据"""
-        # 找到文件路径
-        # global MY_PATH, OBJECT_PATH
-        # MY_PATH, OBJECT_PATH = get_path()
+        # 取发送值
+        data = request.values
+        _data = {
+            "city": data.get('city'),
+            "terms": data.get('terms'),
+            "min_price": data.get('min_price'),
+            "max_price": data.get('max_price'),
+            "room_type": data.get('room_type')
+        }
 
-        # 设置异步循环
-        # e = Engine()
-        # loop = asyncio.get_event_loop()
-        # loop.run_until_complete(
-        #     e.async_start(Anjuke,
-        #                   'cd',
-        #                   'zu',
-        #                   max_price=800,
-        #                   contract_type=1,
-        #                   other='l2'))
-        # loop.close()
-
-        # 返回数据
-        # return f"hello {city} <br> {terms} <br>{min_price} <br>{max_price} <br>{room_type}<br>"
-        return f"{city}"
+        # 执行任务
+        run_engine(_data)
+        data = load_data().to_html(index=True)
+        return render_template('resources.html', data=data)
 
     def run(self):
         self.app.run(debug=True)
+
+
+def load_data():
+    return pd.read_csv('data.csv', encoding='utf_8_sig')
+
+
+def load_cities() -> dict:
+    "读取城市列表"
+    with open('cities.yml', 'r', encoding='utf-8') as f:
+        cities = yaml.load(f, Loader=yaml.CLoader)
+    return cities
+
+
+def run_engine(data):
+    # 设置异步循环
+    fun = Anjuke  # 首先，安居客吧
+    e = Engine()
+    new_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(new_loop)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        e.async_start(
+            fun,
+            data['city'],
+            data['terms'],
+            data['min_price'],
+            data['max_price'],
+        ))
+    loop.close()
 
 
 if __name__ == "__main__":

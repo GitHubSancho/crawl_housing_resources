@@ -5,15 +5,15 @@ import pandas as pd
 
 class ResourcesBase(metaclass=ABCMeta):
     # 房源基类
-    C = ['cd']
-    T = ['zu']
+    # C = ['cd']
+    # T = ['zu']
 
     def __init__(self, city, terms) -> None:
 
-        if city not in self.C:
-            raise f"{ValueError}\n请输入列表中的城市：{self.C}"
-        if terms not in self.T:
-            raise f"{ValueError}\n请输入列表中的合同方式：{self.T}"
+        # if city not in self.C:
+        #     raise f"{ValueError}\n请输入列表中的城市：{self.C}"
+        # if terms not in self.T:
+        #     raise f"{ValueError}\n请输入列表中的合同方式：{self.T}"
         self.city = city
         self.terms = terms
 
