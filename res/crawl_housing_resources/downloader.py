@@ -4,6 +4,18 @@ import aiohttp
 import yaml
 import random
 import pandas as pd
+import sys
+
+
+def get_path():
+    # 根据操作系统找到当前文件路径
+    if sys.platform == "win32":
+        p = '\\'
+    else:
+        p = '/'
+    my_path = sys.path[0]
+    object_path = f'{my_path}{p}..{p}..{p}'
+    return my_path, object_path
 
 
 class Download:
@@ -15,12 +27,12 @@ class Download:
         url = urlparse(url)
         return f'{url.scheme}://{url.netloc}{url.path}'
 
-    def __init__(self, object_path) -> None:
-        self.object_path = object_path
+    def __init__(self) -> None:
+        _,self.object_path = get_path()
         self.ua_list = self._get_ua_list()
         self.data = pd.DataFrame()
 
-    def _get_ua_list(self, ):
+    def _get_ua_list(self):
         path = f"{self.object_path}ua.yml"
         with open(path, 'r', encoding='utf-8') as f:
             ua_list = yaml.load(f, Loader=yaml.CLoader)
