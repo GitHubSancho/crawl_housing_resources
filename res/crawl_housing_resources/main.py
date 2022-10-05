@@ -129,7 +129,8 @@ class Appcation:
         return render_template('resources.html', data=data)
 
     def run(self):
-        self.app.run(debug=True)
+        webbrowser.open('http://127.0.0.1:5000/')
+        self.app.run()
 
 
 def load_data():
