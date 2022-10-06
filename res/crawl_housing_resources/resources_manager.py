@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from lxml import etree
-import pandas as pd
+from pandas import DataFrame
 
 
 class ResourcesBase(metaclass=ABCMeta):
@@ -84,7 +84,7 @@ class Anjuke(ResourcesBase):
 
     def filter_html(self, html):
         # 过滤网页
-        df = pd.DataFrame(
+        df = DataFrame(
             [], columns=['title', 'details', 'address', 'tags', 'price'])
         html = etree.HTML(html)
         aa = html.xpath('//*[@class="zu-itemmod"]')

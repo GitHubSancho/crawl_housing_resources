@@ -1,19 +1,19 @@
 import asyncio
 from urllib.parse import urlparse
-import aiohttp
-import yaml
-import random
-import pandas as pd
-import sys
+from aiohttp import ClientSession
+from yaml import load, CLoader
+from random import choice
+from pandas import DataFrame, concat
+from sys import platform, path as syspath
 
 
 def get_path():
     # 根据操作系统找到当前文件路径
-    if sys.platform == "win32":
+    if platform == "win32":
         p = '\\'
     else:
         p = '/'
-    my_path = sys.path[0]
+    my_path = syspath[0]
     object_path = f'{my_path}{p}..{p}..{p}'
     return my_path, object_path
 
@@ -28,18 +28,18 @@ class Download:
         return f'{url.scheme}://{url.netloc}{url.path}'
 
     def __init__(self) -> None:
-        _,self.object_path = get_path()
+        _, self.object_path = get_path()
         self.ua_list = self._get_ua_list()
-        self.data = pd.DataFrame()
+        self.data = DataFrame()
 
     def _get_ua_list(self):
         path = f"{self.object_path}ua.yml"
         with open(path, 'r', encoding='utf-8') as f:
-            ua_list = yaml.load(f, Loader=yaml.CLoader)
+            ua_list = load(f, Loader=CLoader)
         return ua_list
 
     async def async_download_url(self, url, params=None, headers=None):
-        headers = headers or random.choice(self.ua_list)
+        headers = headers or choice(self.ua_list)
         try:
             async with self.session.get(url,
                                         params=params,
@@ -73,7 +73,7 @@ class Download:
         for status, html, url, redirected_url in resp:
             # 解析网页
             df, next_urls = html_filter(html)
-            self.data = pd.concat([self.data, df])  # 合并数据
+            self.data = concat([self.data, df])  # 合并数据
 
             # 增加新链接
             for new_url in next_urls:
@@ -85,7 +85,7 @@ class Download:
         return url_pool
 
     async def async_fetch(self, html_filter, url_pool: dict, params):
-        async with aiohttp.ClientSession() as self.session:
+        async with ClientSession() as self.session:
             count = 0
             while any(url_pool.values()):
                 resp = await self._async_get_resp(url_pool, params)  # 下载并返回网页

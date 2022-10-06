@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>房源收集</title>
+</head>
+
+<body>
+    <form action="{{url_for('result')}}" method="post">
+        <p>*请输入城市:
+            <input type="text" name="city"><br>
+        </p>
+        <p>*请选择合同类型:<br>
+            <input type="radio" name="terms" value="zu" checked="checked">租房<br>
+            <input type="radio" name="terms" value="buy">买房（敬请期待）<br>
+            <input type="radio" name="terms" value="sec">二手（敬请期待）<br>
+        </p>
+        <p>
+            最低价格(非必填): <input type="text" name="min_price"><br>
+            最高价格(非必填): <input type="text" name="max_price"><br>
+        </p>
+        <p>几房室(非必选):<br>
+            <input type="radio" name="room_type" value="1">1个房室<br>
+            <input type="radio" name="room_type" value="2">2个房室<br>
+            <input type="radio" name="room_type" value="3">3个房室<br>
+            <input type="radio" name="room_type" value="4">4个房室<br>
+            <input type="radio" name="room_type" value="5">5个房及以上<br>
+        </p>
+        <!-- TODO: 整租、合租的类型选择未实现 & 实拍、真实、个人房源类型未实现：应该仅在选择租房时实现 -->
+
+        <p>
+            <button>提交</button>
+        </p>
+    </form>
+</body>
+
+</html>

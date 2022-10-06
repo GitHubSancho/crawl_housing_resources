@@ -6,21 +6,16 @@
 """
 爬取互联网上的住房信息
 """
-import os
-from tkinter import E
-from unittest import result
+from os import path as ospath
 from flask import Flask, redirect, render_template, request, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired, EqualTo, Length
 import pandas as pd
-import yaml
-import sys
+from yaml import load, CLoader
 from time import sleep
 from urllib.parse import urlparse
-import requests
-import webbrowser
-import aiohttp
+from webbrowser import open as wopen
 import asyncio
 # ----
 from resources_manager import ResourcesBase, Anjuke
@@ -78,7 +73,7 @@ class Register(FlaskForm):
 
 class Appcation:
     parameter = {}
-    template_dir = os.path.abspath('./res/templates/')
+    template_dir = ospath.abspath('./res/templates/')
     app = Flask(__name__, template_folder=template_dir)
 
     def __init__(self) -> None:
@@ -129,7 +124,7 @@ class Appcation:
         return render_template('resources.html', data=data)
 
     def run(self):
-        webbrowser.open('http://127.0.0.1:5000/')
+        wopen('http://127.0.0.1:5000/')
         self.app.run()
 
 
@@ -140,7 +135,7 @@ def load_data():
 def load_cities() -> dict:
     "读取城市列表"
     with open('cities.yml', 'r', encoding='utf-8') as f:
-        cities = yaml.load(f, Loader=yaml.CLoader)
+        cities = load(f, Loader=CLoader)
     return cities
 
 
